@@ -308,9 +308,9 @@ def listadd():
   si = str(datetime.now())
   with open("./data.json",'r',encoding='utf-8') as load_f:
     d = json.load(load_f)
-  id = d["Listcount"]
+    id = d["Listcount"]
   params_dict = {"id":id, "name":name, "description":description, "si":si}
-  g.conn.execute(text("INSERT INTO List(List_Id, List_Name,List_Descripition, List_time) VALUES (:id, name, description,:si)"), params_dict)
+  g.conn.execute(text("INSERT INTO List(List_Id, List_Name,List_Description, List_time) VALUES (:id, :name, :description,:si)"), params_dict)
 
   g.conn.commit()
   return render_template('loginsucc.html')
