@@ -35,7 +35,6 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #
 DATABASEURI = "postgresql://yl5363:240308@34.74.171.121/proj1part2"
 
-
 #
 # This line creates a database engine that knows how to connect to the URI above.
 #
@@ -233,7 +232,12 @@ def login():
   cursor = g.conn.execute(text('SELECT user_password,user_id FROM users where user_name=(:id)'), params_dict)
   res,ID = cursor.fetchall()[0]
   if res == pw:
-    Changedata("CurUser",ID)
+    with open("./data.json",'r+',encoding='utf-8') as load_f:
+      d = json.load(load_f)
+      d["CurUser"] = id
+      load_f.seek(0)
+      load_f.write(json.dumps(d))
+      load_f.truncate()
     return redirect('/update')
   else:
     return render_template('loginfail.html')
@@ -248,6 +252,7 @@ def register():
   fid = Readdata("Usercount")+1
   Changedata("Usercount",fid)
   params_dict = {"uid":fid,"id":id,"pw":pw,"em":em,"dob":dob,"ot":ot,"fid":fid}
+  print("user id", uid)
   g.conn.execute(text("INSERT INTO users(user_id,user_name,user_password,user_email,dob,created,feed_id) VALUES (:uid,:id,:pw,:em,:dob,:ot,:fid)"), params_dict)
   g.conn.commit()
   return render_template('login.html')
@@ -258,12 +263,11 @@ def tweet():
   tl = "English"
   pt = str(datetime.now())
   with open("./data.json",'r',encoding='utf-8') as load_f:
-    d = json.load(load_f)
-  uid = d["CurUser"]
-  tid = Readdata("Tweetcount")+1
-  Changedata("Tweetcount",tid)
+      d = json.load(load_f)
+      uid = d["CurUser"]
+  tid = int(request.form['tid'])
   params_dict = {"tid":tid,"tt":tt,"tl":tl,"pt":pt, "uid":uid}
-  g.conn.execute(text("INSERT INTO Tweets(tweet_id,tweet_text,tweet_language,post_time) VALUES (:tid,:tt,:tl,:pt)"), params_dict)
+  g.conn.execute(text("INSERT INTO Tweets(user_id, tweet_id,text,tweet_language,post_time) VALUES (:uid, :tid,:tt,:tl,:pt)"), params_dict)
   g.conn.execute(text("INSERT INTO from_user(tweet_id,user_id) VALUES (:tid, :uid)"), params_dict)
   g.conn.commit()
   return render_template('index')
@@ -273,8 +277,8 @@ def like():
   si = str(datetime.now())
   with open("./data.json",'r',encoding='utf-8') as load_f:
     d = json.load(load_f)
-  tid = request.form['id']
-  uid = d[CurUser]
+    tid = request.form['id']
+    uid = d['CurUser']
   Changedata("Tweetcount",d["Tweetcount"]+1)
   params_dict = {"tid": tid, "uid":uid, "si":si}
   g.conn.execute(text("INSERT INTO Likes(tweet_id, user_id,since) VALUES (:tid,:uid,:si)"), params_dict)
@@ -286,10 +290,13 @@ def follow():
   si = str(datetime.now())
   with open("./data.json",'r',encoding='utf-8') as load_f:
     d = json.load(load_f)
-  uid = d[CurUser]
+    uid = d['CurUser']
+  print('here', uid)
   fud = request.form["id"]
+  print('there', fud)
   params_dict = {"uid":uid, "fud":fud, "si":si}
-  g.conn.execute(text("INSERT INTO Likes(tweet_id, user_id,since) VALUES (:tid,:uid,:si)"), params_dict)
+  print('ids', uid, fud)
+  g.conn.execute(text("INSERT INTO Follows_User(Following_User_ID, Followed_User_Id,since) VALUES (:uid,:fud,:si)"), params_dict)
   g.conn.commit()
   return render_template('index')
 
