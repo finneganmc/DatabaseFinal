@@ -195,16 +195,19 @@ def tologin():
 
 @app.route('/update')
 def update(): 
+  print("0")
   cursor = g.conn.execute(text("SELECT tweet_id FROM has_tweet WHERE feed_id=(:id)"),{"id":Readdata("CurUser")})
   Tweet_set = set()
+  print("1")
   for i in cursor:Tweet_set.add(i[0])
   Tweet_list = []
+  print("2")
   for i in Tweet_set:
     cursor = g.conn.execute(text("SELECT user_id,text,post_time FROM tweets WHERE tweet_id=(:id)"),{"id":i})
     for a,b,c in cursor:
       print(a,b,c)
       c2 = g.conn.execute(text("SELECT user_name FROM users WHERE user_id=(:id)"),{"id":a})
-      Tweet_list.append((c2.fetchall()[0][0],b,str(c)[:-10],str(i)))
+      Tweet_list.append((c2.fetchall()[0][0],b,str(c)[:-10]))
   print(Tweet_list)
   context = dict(data = Tweet_list)
   return render_template("loginsucc.html", **context)
@@ -256,10 +259,9 @@ def tweet():
   pt = str(datetime.now())
   with open("./data.json",'r',encoding='utf-8') as load_f:
     d = json.load(load_f)
-  tid = d["Tweetcount"]+1
-  d["Tweetcount"] += 1
-  uid = d[CurUser]
-  Changedata("Tweetcount",d["Tweetcount"]+1)
+  uid = d["CurUser"]
+  tid = Readdata("Tweetcount")+1
+  Changedata("Tweetcount",tid)
   params_dict = {"tid":tid,"tt":tt,"tl":tl,"pt":pt, "uid":uid}
   g.conn.execute(text("INSERT INTO Tweets(tweet_id,tweet_text,tweet_language,post_time) VALUES (:tid,:tt,:tl,:pt)"), params_dict)
   g.conn.execute(text("INSERT INTO from_user(tweet_id,user_id) VALUES (:tid, :uid)"), params_dict)
@@ -288,6 +290,20 @@ def follow():
   fud = request.form["id"]
   params_dict = {"uid":uid, "fud":fud, "si":si}
   g.conn.execute(text("INSERT INTO Likes(tweet_id, user_id,since) VALUES (:tid,:uid,:si)"), params_dict)
+  g.conn.commit()
+  return render_template('index')
+
+@app.route('/createlist', methods=['POST'])
+def listadd():
+  name = request.form["Name"]
+  description = request.form["Description"]
+  si = str(datetime.now())
+  with open("./data.json",'r',encoding='utf-8') as load_f:
+    d = json.load(load_f)
+  id = d["Listcount"]
+  params_dict = {"id":id, "name":name, "description":description, "si":si}
+  g.conn.execute(text("INSERT INTO List(List_Id, List_Name,List_Descripition, List_time) VALUES (:id, name, description,:si)"), params_dict)
+
   g.conn.commit()
   return render_template('index')
 
