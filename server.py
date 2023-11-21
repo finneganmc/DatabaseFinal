@@ -204,7 +204,7 @@ def update():
     for a,b,c in cursor:
       print(a,b,c)
       c2 = g.conn.execute(text("SELECT user_name FROM users WHERE user_id=(:id)"),{"id":a})
-      Tweet_list.append((c2.fetchall()[0][0],b,str(c)[:-10]))
+      Tweet_list.append((c2.fetchall()[0][0],b,str(c)[:-10],str(i)))
   print(Tweet_list)
   context = dict(data = Tweet_list)
   return render_template("loginsucc.html", **context)
