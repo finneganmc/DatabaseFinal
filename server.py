@@ -229,12 +229,12 @@ def login():
   id = request.form['UserID']
   pw = request.form['Password']
   params_dict = {"id":id}
-  cursor = g.conn.execute(text('SELECT user_password,user_id FROM users where user_name=(:id)'), params_dict)
-  res,ID = cursor.fetchall()[0]
+  cursor = g.conn.execute(text('SELECT user_password,user_id,feed_id FROM users where user_name=(:id)'), params_dict)
+  res,ID,FID = cursor.fetchall()[0]
   if res == pw:
     with open("./data.json",'r+',encoding='utf-8') as load_f:
       d = json.load(load_f)
-      d["CurUser"] = id
+      d["CurUser"] = FID
       load_f.seek(0)
       load_f.write(json.dumps(d))
       load_f.truncate()
@@ -249,10 +249,11 @@ def register():
   em = request.form['Email']
   dob = request.form['dob']
   ot = str(datetime.now())
-  fid = Readdata("Usercount")+1
+  fid = int(Readdata("Usercount"))+1
   Changedata("Usercount",fid)
   params_dict = {"uid":fid,"id":id,"pw":pw,"em":em,"dob":dob,"ot":ot,"fid":fid}
-  print("user id", uid)
+  print("user id")
+  g.conn.execute(text("INSERT INTO feeds(feed_id) VALUES (:fid)"), params_dict)
   g.conn.execute(text("INSERT INTO users(user_id,user_name,user_password,user_email,dob,created,feed_id) VALUES (:uid,:id,:pw,:em,:dob,:ot,:fid)"), params_dict)
   g.conn.commit()
   return render_template('login.html')
@@ -265,12 +266,13 @@ def tweet():
   with open("./data.json",'r',encoding='utf-8') as load_f:
       d = json.load(load_f)
       uid = d["CurUser"]
-  tid = int(request.form['tid'])
+  tid = Readdata("Tweetcount")
+  print("tid", tid)
+  Changedata("Tweetcount", tid+1)
   params_dict = {"tid":tid,"tt":tt,"tl":tl,"pt":pt, "uid":uid}
   g.conn.execute(text("INSERT INTO Tweets(user_id, tweet_id,text,tweet_language,post_time) VALUES (:uid, :tid,:tt,:tl,:pt)"), params_dict)
-  g.conn.execute(text("INSERT INTO from_user(tweet_id,user_id) VALUES (:tid, :uid)"), params_dict)
   g.conn.commit()
-  return render_template('index')
+  return render_template('loginsucc.html')
 
 @app.route('/like', methods=['POST'])
 def like():
@@ -279,11 +281,10 @@ def like():
     d = json.load(load_f)
     tid = request.form['id']
     uid = d['CurUser']
-  Changedata("Tweetcount",d["Tweetcount"]+1)
   params_dict = {"tid": tid, "uid":uid, "si":si}
   g.conn.execute(text("INSERT INTO Likes(tweet_id, user_id,since) VALUES (:tid,:uid,:si)"), params_dict)
   g.conn.commit()
-  return render_template('index')
+  return render_template('loginsucc.html')
 
 @app.route('/follow', methods=['POST'])
 def follow():
@@ -298,7 +299,7 @@ def follow():
   print('ids', uid, fud)
   g.conn.execute(text("INSERT INTO Follows_User(Following_User_ID, Followed_User_Id,since) VALUES (:uid,:fud,:si)"), params_dict)
   g.conn.commit()
-  return render_template('index')
+  return render_template('loginsucc.html')
 
 @app.route('/createlist', methods=['POST'])
 def listadd():
@@ -312,7 +313,7 @@ def listadd():
   g.conn.execute(text("INSERT INTO List(List_Id, List_Name,List_Descripition, List_time) VALUES (:id, name, description,:si)"), params_dict)
 
   g.conn.commit()
-  return render_template('index')
+  return render_template('loginsucc.html')
 
 # @app.route('/login')
 # def login():

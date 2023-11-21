@@ -9,12 +9,30 @@
 
 <body>
   <div>
-    {% for name,text,time in data %}
+    {% for name,text,time,id in data %}
     <div>{{name}} {{time}}</div>
     <div>{{text}}</div>
     <p> </p>
+    <form method="POST" action="/like">
+      <p><input type="hidden" name="id" value="{{id}}"> <input type="submit" value="Like"></p>
+    </form>
     {% endfor %}
+    
   </div>
+
+  <form method="POST" action="/tweet">
+    <p>Text: <input type="text" name="text" defaultValue = 'text'> <input type="submit" value="Add"></p>
+  </form>
+     
+  <form method="POST" action="/follow">
+    <p>Follow User: <input type="text" name="id"> <input type="submit" value="Add"></p>
+  </form>
+
+  <form method="POST" action="/createlist">
+    <p>Send current followed accounts to list: <input type="text" name="Description"> <input type="text" name="Description"> <input type="submit" value="Add"></p>
+  </form>
+    
+    
 <p><a href="tologin">Log out</a></p>
 </body>
 
