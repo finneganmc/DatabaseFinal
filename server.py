@@ -195,7 +195,7 @@ def tologin():
 
 @app.route('/update')
 def update(): 
-  cursor = g.conn.execute(text("SELECT tweet_id FROM has_tweet WHERE feed_id=(:id)"),{"id":CurUser})
+  cursor = g.conn.execute(text("SELECT tweet_id FROM has_tweet WHERE feed_id=(:id)"),{"id":Readdata("CurUser")})
   Tweet_set = set()
   for i in cursor:Tweet_set.add(i[0])
   Tweet_list = []
@@ -203,11 +203,11 @@ def update():
     cursor = g.conn.execute(text("SELECT user_id,text,post_time FROM tweets WHERE tweet_id=(:id)"),{"id":i})
     for a,b,c in cursor:
       print(a,b,c)
-      a = a[0],b = b[0],c = c[0]
       c2 = g.conn.execute(text("SELECT user_name FROM users WHERE user_id=(:id)"),{"id":a})
-      print(c2)
-      Tweet_list.append(c2[0][0],b,str(c))
+      Tweet_list.append((c2.fetchall()[0][0],b,str(c)[:-10]))
   print(Tweet_list)
+  context = dict(data = Tweet_list)
+  return render_template("loginsucc.html", **context)
   # params_dict = {"name":name}
   # g.conn.execute(text('INSERT INTO test(name) VALUES (:name)'), params_dict)
   # g.conn.commit()
@@ -231,7 +231,7 @@ def login():
   res,ID = cursor.fetchall()[0]
   if res == pw:
     Changedata("CurUser",ID)
-    return render_template('loginsucc.html')
+    return redirect('/update')
   else:
     return render_template('loginfail.html')
   
@@ -242,10 +242,8 @@ def register():
   em = request.form['Email']
   dob = request.form['dob']
   ot = str(datetime.now())
-  with open("./data.json",'r',encoding='utf-8') as load_f:
-    d = json.load(load_f)
-  fid = d["Usercount"]+1
-  Changedata("Usercount",d["Usercount"]+1)
+  fid = Readdata("Usercount")+1
+  Changedata("Usercount",fid)
   params_dict = {"uid":fid,"id":id,"pw":pw,"em":em,"dob":dob,"ot":ot,"fid":fid}
   g.conn.execute(text("INSERT INTO users(user_id,user_name,user_password,user_email,dob,created,feed_id) VALUES (:uid,:id,:pw,:em,:dob,:ot,:fid)"), params_dict)
   g.conn.commit()
