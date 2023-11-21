@@ -249,7 +249,9 @@ def register():
   g.conn.commit()
   return render_template('login.html')
   
-
+@app.route('/tweet', methods=['POST'])
+@app.route('/like', methods=['POST'])
+@app.route('/follow', methods=['POST'])
 
 # @app.route('/login')
 # def login():
